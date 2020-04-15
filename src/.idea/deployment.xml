@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="root@119.23.227.99:27784">
+    <serverData>
+      <paths name="AttGAN">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/workspace/cpfs-data/H0014_AttGAN-TensorFlow/src" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@119.23.227.99:27784">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/workspace/cpfs-data/H0014_AttGAN-TensorFlow/src" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

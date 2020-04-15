@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="9ea5a1ab-400e-4a49-9831-c1f08aaa350e" name="AttGAN" url="http://119.23.227.99">
+        <fileTransfer host="119.23.227.99" port="27784" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="27784" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
