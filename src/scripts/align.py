@@ -1,7 +1,12 @@
 import argparse
+import cv2
+from functools import partial
+
+from scripts.cropper import align_crop
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--img_dir', dest='img_dir', default='D:/Data/img_celeba/img_align_celeba',
+parser.add_argument('--img_dir', dest='img_dir', default='./workspace/cpfs-data/Data/img_align_celeba',
                     help='path of your celeb dataset')
 parser.add_argument('--save_dir', dest='save_dir', default='D:/Data/img_celeba/aligned',
                     help='saving path for the aligned data')
@@ -23,3 +28,11 @@ parser.add_argument('--face_factor', dest='face_factor', type=float, default=0.4
                     help='the factor of face area relative to the output image')
 args = parser.parse_args()
 
+
+_DEFAULT_JPG_QUALITY = 95
+imread = cv2.imread
+imwrite = partial(cv2.imwrite, params=[int(cv2.IMWRITE_JPEG_QUALITY), _DEFAULT_JPG_QUALITY])
+
+
+# count landmarks
+with open(args.landmark_file)
