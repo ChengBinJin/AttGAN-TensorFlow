@@ -1,8 +1,9 @@
 import argparse
-import re
+import os
 import cv2
 import numpy as np
 from functools import partial
+from multiprocessing import Pool
 
 from cropper import align_crop
 
@@ -25,7 +26,7 @@ parser.add_argument('--move_h', dest='move_h', type=float, default=0.25,
                     help='relative height compared to the coordinates of the standard landmark')
 parser.add_argument('--move_w', dest='move_w', type=float, default=0.,
                     help='relative width compared to the coordinates of the standard landmark')
-parser.add_argument('--save_format', dest='save_format', choices=['.jpg', '.png'], default='.jpg',
+parser.add_argument('--save_format', dest='save_format', choices=['jpg', 'png'], default='jpg',
                     help='extension of the saved img')
 parser.add_argument('--n_worker', dest='n_worker', type=int, default=8, help='number threads for using data alignment')
 parser.add_argument('--face_factor', dest='face_factor', type=float, default=0.45,
@@ -49,11 +50,20 @@ def read_landmark_files():
 
 
 if __name__ == '__main__':
+    print("Reading img paths, and it will take about 1 minute...")
+
     img_names, landmarks, standard_landmark = read_landmark_files()
     print('num of img_names: {}'.format(len(img_names)))
     print('landmarks shape: {}'.format(landmarks.shape))
     print('standard_landmark shape: {}'.format(standard_landmark.shape))
-
     assert len(img_names) == landmarks.shape[0], " [*] The number of imgs is different!"
     assert landmarks.shape[1] == standard_landmark.shape[0], \
         " [*] The dimension of landmark betwen the file and standard is different!"
+
+    # data dir
+    save_dir = os.path.join(args.save_dir, 'align_size(%d, %d)_move(%.3f, %.3f)_face_factor(%.3f)_%s' % (
+        args.crop_size_h, args.crop_size_w, args.move_h, args.move_w, args.face_factor, args.save_format))
+    data_dir = os.path.join(save_dir, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+
+    pool = Pool(args.n_worker)
