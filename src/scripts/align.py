@@ -1,6 +1,7 @@
 import argparse
 import os
 import cv2
+import tqdm
 import numpy as np
 from functools import partial
 from multiprocessing import Pool
@@ -35,8 +36,9 @@ args = parser.parse_args()
 
 
 _DEFAULT_JPG_QUALITY = 95
-imread = cv2.imread
 imwrite = partial(cv2.imwrite, params=[int(cv2.IMWRITE_JPEG_QUALITY), _DEFAULT_JPG_QUALITY])
+img_names, landmarks, standard_landmark, data_dir = None, None, None, None
+
 
 def read_landmark_files():
     # read data
@@ -49,9 +51,43 @@ def read_landmark_files():
     return img_names_, landmarks_, standard_landmark_
 
 
+def work(i):  # a single worker
+    success = False
+    for _ in range(3):
+        try:
+            img = cv2.imread(os.path.join(args.img_dir, img_names[i]))
+            img_crop, tformed_landmark = align_crop(img,
+                                                    landmarks[i],
+                                                    standard_landmark,
+                                                    crop_size=(args.crop_size_h, args.crop_size_w),
+                                                    face_factor=args.face_factor,
+                                                    align_type='similarity',
+                                                    order=3,
+                                                    mode='edge')
+            img_name = os.path.splitext(img_names[i])[0] + '.' + args.format
+            save_path = os.path.join(data_dir, img_name)
+            imwrite(save_path, img_crop)
+
+            ############################################################################################################
+            #TODO: ???
+            # tformed_landmarks.shape = -1
+            # name_landmark_str = ('%s' + ' %.1f' * n_landmark * 2) % ((name, ) + tuple(tformed_landmarks))
+            ############################################################################################################
+            success = True
+            break
+        except:
+            continue
+
+    if success:
+        return new_landmark
+    else:
+        print(" [*] {} fails!".format(img_names[i]))
+
+
 if __name__ == '__main__':
     print("Reading img paths, and it will take about 1 minute...")
 
+    # read img paths, landmarks, and standard landmark
     img_names, landmarks, standard_landmark = read_landmark_files()
     print('num of img_names: {}'.format(len(img_names)))
     print('landmarks shape: {}'.format(landmarks.shape))
@@ -66,4 +102,15 @@ if __name__ == '__main__':
     data_dir = os.path.join(save_dir, 'data')
     os.makedirs(data_dir, exist_ok=True)
 
+    # parallel processing for image alignment
     pool = Pool(args.n_worker)
+    new_landmarks = list(tqdm.tqdm(pool.imap(work, range(len(img_names))), total=len(img_names)))
+    pool.close()
+    pool.join()
+
+    # save the new landmarks according to the cropped img
+    save_new_landmark_path = os.path.join(save_dir, 'landmark.txt')
+    with open(save_new_landmark_path, 'w') as f:
+        for new_landmark in new_landmarks:
+            if new_landmark:
+                f.write(new_landmark + '\n')
