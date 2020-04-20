@@ -60,10 +60,7 @@ def work(i):  # a single worker
                                                     landmarks[i],
                                                     standard_landmark,
                                                     crop_size=(args.crop_size_h, args.crop_size_w),
-                                                    face_factor=args.face_factor,
-                                                    align_type='similarity',
-                                                    order=3,
-                                                    mode='edge')
+                                                    face_factor=args.face_factor)
             img_name = os.path.splitext(img_names[i])[0] + '.' + args.format
             save_path = os.path.join(data_dir, img_name)
             imwrite(save_path, img_crop)
