@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 
 def align_crop(img, landmarks, standard_landmarks, crop_size=572, face_factor=0.45, align_type='similarity', order=3,
@@ -50,4 +51,16 @@ def align_crop(img, landmarks, standard_landmarks, crop_size=572, face_factor=0.
         crop_size_h = crop_size_w = crop_size
     else:
         raise Exception(" [!] Invalid 'crop_size'! The 'crop_size' should be (1) one integer for (crop_size, crop_size) ar (2) (int, int) for (crop_size_h, crop_size_w)!")
+
+    # estimate transform matrix
+    target_landmarks = standard_landmarks * max(crop_size_h, crop_size_w) * face_factor + np.array([crop_size_w // 2, crop_size_h // 2])
+    if align_type == 'affine':  # 6 degree of freedom
+        transform_matrix, _ = cv2.estimateAffine2D(target_landmarks, landmarks, ransacReprojThreshold=np.Inf)
+    else:  # 4 degree of freedom: using the combinations of translation, rotation, and uniform scaling
+        transform_matrix, _ = cv2.estimateAffinePartial2D(target_landmarks, landmarks, ransacReprojThreshold=np.Inf)
+
+    # warp image by given transform
+    img_crop = cv2.warpAffine(img, transform_matrix, dsize=(crop_size_w, crop_size_h),
+                              flags=cv2.WARP_INVERSE_MAP + interpolation[order], borderMode=border[mode])
+
 
