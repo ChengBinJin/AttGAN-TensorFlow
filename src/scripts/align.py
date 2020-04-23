@@ -83,47 +83,31 @@ def work(i):  # a single worker
                                                     face_factor=args.face_factor)
             img_name = os.path.splitext(img_names[i])[0] + '.' + args.format
             save_path = os.path.join(data_dir, img_name)
-            print('save_path: {}'.format(save_path))
             imwrite(save_path, img_crop)
 
-            ############################################################################################################
-            #TODO: ???
-            # tformed_landmarks.shape = -1
-            # name_landmark_str = ('%s' + ' %.1f' * n_landmark * 2) % ((name, ) + tuple(tformed_landmarks))
-            ############################################################################################################
+            transformed_landmark.shape = -1
+
+            name_landmark_str = ('%s' + ' %.1f' * args.n_landmark * 2) % ((img_name,) + tuple(transformed_landmark))
             success = True
             break
         except:
-            continue
-
+            success = False
     if success:
-        return "hello"
+        return name_landmark_str
     else:
         print(" [*] {} fails!".format(img_names[i]))
 
 
 if __name__ == '__main__':
-    for i, _ in enumerate(img_names):
-        print(i)
-        img = cv2.imread(os.path.join(args.img_dir, img_names[i]))
-        img_crop, tformed_landmark = align_crop(img,
-                                                landmarks[i],
-                                                standard_landmark,
-                                                crop_size=(args.crop_size_h, args.crop_size_w),
-                                                face_factor=args.face_factor)
-        img_name = os.path.splitext(img_names[i])[0] + '.' + args.save_format
-        save_path = os.path.join(data_dir, img_name)
-        print('save_path: {}'.format(save_path))
-        imwrite(save_path, img_crop)
     # parallel processing for image alignment
-    # pool = Pool(args.n_worker)
-     #new_landmarks = list(tqdm.tqdm(pool.imap(work, range(len(img_names))), total=len(img_names)))
-    # pool.close()
-    # pool.join()
-    #
-    # # save the new landmarks according to the cropped img
-    # save_new_landmark_path = os.path.join(save_dir, 'landmark.txt')
-    # with open(save_new_landmark_path, 'w') as f:
-    #     for new_landmark in new_landmarks:
-    #         if new_landmark:
-    #             f.write(new_landmark + '\n')
+    pool = Pool(args.n_worker)
+    new_landmarks = list(tqdm.tqdm(pool.imap(work, range(len(img_names))), total=len(img_names)))
+    pool.close()
+    pool.join()
+
+    # save the new landmarks according to the cropped img
+    save_new_landmark_path = os.path.join(save_dir, 'landmark.txt')
+    with open(save_new_landmark_path, 'w') as f:
+        for new_landmark in new_landmarks:
+            if new_landmark:
+                f.write(new_landmark + '\n')

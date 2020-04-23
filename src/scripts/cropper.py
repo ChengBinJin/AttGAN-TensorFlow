@@ -65,7 +65,6 @@ def align_crop(img, landmarks, standard_landmarks, crop_size=572, face_factor=0.
 
     # get transformed landmarks
     transformed_landmarks = cv2.transform(np.expand_dims(landmarks, axis=0), m=cv2.invertAffineTransform(transform_matrix))
-    print('transformed_landmarks shape: {}'.format(transformed_landmarks.shape))
 
     return img_crop, transformed_landmarks
 
