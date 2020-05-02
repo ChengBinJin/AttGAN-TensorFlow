@@ -10,20 +10,17 @@ from cropper import align_crop
 
 
 parser = argparse.ArgumentParser()
-# '/workspace/cpfs-data/Data/img_celeba'
-parser.add_argument('--img_dir', dest='img_dir', default='D:/Data/img_celeba/img_celeba',
+parser.add_argument('--local', dest='local', action='store_true', default=False, help='selection from local or remote environment')
+parser.add_argument('--img_dir', dest='img_dir', default='CelebA/img_celeba',
                     help='path of your celeb dataset')
-# '/workspace/cpfs-data/Data/img_celeba/aligned'
-parser.add_argument('--save_dir', dest='save_dir', default='D:/Data/img_celeba/aligned',
+parser.add_argument('--save_dir', dest='save_dir', default='CelebA/aligned',
                     help='saving path for the aligned data')
 parser.add_argument('--n_landmark', dest='n_landmark', type=int, default=68,
                     help='number of landmarks for used in celebA dataset')
-# '/workspace/cpfs-data/Data/img_celeba/landmark.txt'
-parser.add_argument('--landmark_file', dest='landmark_file', default='D:/Data/img_celeba/landmark.txt',
+parser.add_argument('--landmark_file', dest='landmark_file', default='CelebA/landmark.txt',
                     help='landmark coordinates saved for each image')
-# '/workspace/cpfs-data/Data/img_celeba/standard_landmark_68pts.txt'
 parser.add_argument('--standard_landmark_file', dest='standard_landmark_file',
-                    default='D:/Data/img_celeba//standard_landmark_68pts.txt',
+                    default='CelebA/standard_landmark_68pts.txt',
                     help='imgs will be alinged by calculating perspective matrix between landmark and standard landmark')
 parser.add_argument('--crop_size_h', dest='crop_size_h', type=int, default=572, help='height of the cropped img')
 parser.add_argument('--crop_size_w', dest='crop_size_w', type=int, default=572, help='width of the cropped img')
@@ -40,23 +37,27 @@ args = parser.parse_args()
 
 
 def read_landmark_files():
+    if args.local:
+        header = "D:/Data"
+    else:
+        header = "/workspace/cpfs-data/Data"
+
     # read data
-    img_names_ = np.genfromtxt(args.landmark_file, dtype=np.str, usecols=[0])
+    img_names_ = np.genfromtxt(os.path.join(header, args.landmark_file), dtype=np.str, usecols=[0])
     landmarks_ = np.genfromtxt(
-        args.landmark_file, dtype=np.float, usecols=range(1, args.n_landmark * 2 + 1)).reshape(-1, args.n_landmark, 2)
-    standard_landmark_ = np.genfromtxt(args.standard_landmark_file, dtype=np.float).reshape(args.n_landmark, 2)
+        os.path.join(header, args.landmark_file), dtype=np.float, usecols=range(1, args.n_landmark * 2 + 1)).reshape(-1, args.n_landmark, 2)
+    standard_landmark_ = np.genfromtxt(os.path.join(header, args.standard_landmark_file), dtype=np.float).reshape(args.n_landmark, 2)
     standard_landmark_[:, 0] += args.move_w
     standard_landmark_[:, 1] += args.move_h
-    return img_names_, landmarks_, standard_landmark_
+    return header, img_names_, landmarks_, standard_landmark_
 
 
 _DEFAULT_JPG_QUALITY = 95
 imwrite = partial(cv2.imwrite, params=[int(cv2.IMWRITE_JPEG_QUALITY), _DEFAULT_JPG_QUALITY])
 
 print("Reading img paths, and it will take about 1 minute...")
-
 # read img paths, landmarks, and standard landmark
-img_names, landmarks, standard_landmark = read_landmark_files()
+header, img_names, landmarks, standard_landmark = read_landmark_files()
 print('num of img_names: {}'.format(len(img_names)))
 print('landmarks shape: {}'.format(landmarks.shape))
 print('standard_landmark shape: {}'.format(standard_landmark.shape))
@@ -65,7 +66,7 @@ assert landmarks.shape[1] == standard_landmark.shape[0], \
     " [*] The dimension of landmark betwen the file and standard is different!"
 
 # data dir
-save_dir = os.path.join(args.save_dir, 'align_size(%d, %d)_move(%.3f, %.3f)_face_factor(%.3f)_%s' % (
+save_dir = os.path.join(os.path.join(header, args.save_dir), 'align_size(%d, %d)_move(%.3f, %.3f)_face_factor(%.3f)_%s' % (
     args.crop_size_h, args.crop_size_w, args.move_h, args.move_w, args.face_factor, args.save_format))
 data_dir = os.path.join(save_dir, 'data')
 os.makedirs(data_dir, exist_ok=True)
@@ -85,9 +86,8 @@ def work(i):  # a single worker
             save_path = os.path.join(data_dir, img_name)
             imwrite(save_path, img_crop)
 
-            transformed_landmark.shape = -1
-
-            name_landmark_str = ('%s' + ' %.1f' * args.n_landmark * 2) % ((img_name,) + tuple(transformed_landmark))
+            tformed_landmark.shape = -1
+            name_landmark_str = ('%s' + ' %.1f' * args.n_landmark * 2) % ((img_name,) + tuple(tformed_landmark))
             success = True
             break
         except:
